@@ -37,6 +37,7 @@ def proto_args(parser, parents):
     vgroup.add_argument("--dc-list", action="store_true", help="Enumerate Domain Controllers")
     vgroup.add_argument("--get-sid", action="store_true", help="Get domain sid")
     vgroup.add_argument("--active-users", nargs="*", help="Get Active Domain Users Accounts")
+    vgroup.add_argument("--active-users-export", help="Enumerate active domain users and export them to the specified file")
     vgroup.add_argument("--pso", action="store_true", help="Get Fine Grained Password Policy/PSOs")
     vgroup.add_argument("--pass-pol", action="store_true", help="Dump password policy")
 

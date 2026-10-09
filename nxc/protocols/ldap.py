@@ -1020,7 +1020,7 @@ class ldap(connection):
         self.logger.info("Domain Controller enumeration complete.")
 
     def active_users(self):
-        if len(self.args.active_users) > 0:
+        if self.args.active_users:
             self.logger.debug(f"Dumping users: {', '.join(self.args.active_users)}")
             search_filter = f"(|{''.join(f'(sAMAccountName={user})' for user in self.args.active_users)})"
         else:
@@ -1044,6 +1044,15 @@ class ldap(connection):
                 if pwd_last_set:
                     pwd_last_set = "<never>" if pwd_last_set == "0" else datetime.fromtimestamp(self.getUnixTime(int(pwd_last_set))).strftime("%Y-%m-%d %H:%M:%S")
                 self.logger.highlight(f"{user.get('sAMAccountName', ''):<30}{pwd_last_set:<20}{user.get('badPwdCount', ''):<9}{user.get('description', '')}")
+
+            if self.args.active_users_export:
+                self.logger.display(f"Writing {len(active_users):d} active users to {self.args.active_users_export}")
+                with open(self.args.active_users_export, "w+") as file:
+                    file.writelines(f"{user.get('sAMAccountName', '')}\n" for user in active_users)
+
+    def active_users_export(self):
+        if self.args.active_users is None:
+            self.active_users()
 
     def asreproast(self):
         # Building the search filter
