@@ -75,7 +75,7 @@ class UserSamrDump:
                 names_lookup_resp = samr.hSamrLookupNamesInDomain(self.dce, domain_handle, requested_users)
                 rids = [r["Data"] for r in names_lookup_resp["RelativeIds"]["Element"]]
                 self.logger.debug(f"Specific RIDs retrieved: {rids}")
-                users = self.get_user_info(domain_handle, rids, active_only)
+                users.extend(self.get_user_info(domain_handle, rids, active_only))
             except DCERPCException as e:
                 self.logger.debug(f"Exception while requesting users in domain: {e}")
                 if "STATUS_SOME_NOT_MAPPED" in str(e):
@@ -97,7 +97,7 @@ class UserSamrDump:
 
                 rids = [r["RelativeId"] for r in enumerate_users_resp["Buffer"]["Buffer"]]
                 self.logger.debug(f"Full domain RIDs retrieved: {rids}")
-                users = self.get_user_info(domain_handle, rids, active_only)
+                users.extend(self.get_user_info(domain_handle, rids, active_only))
 
                 # set these for the while loop
                 enumerationContext = enumerate_users_resp["EnumerationContext"]
@@ -108,6 +108,7 @@ class UserSamrDump:
             self.logger.display(f"Writing {len(users)} local users to {dump_path}")
             with open(dump_path, "w+") as file:
                 file.writelines(f"{user}\n" for user in users)
+        self.users = users
         self.dce.disconnect()
 
     def get_user_info(self, domain_handle, user_ids, active_only=False):

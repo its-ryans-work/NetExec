@@ -1957,9 +1957,7 @@ class smb(connection):
     def active_users(self):
         if self.args.active_users:
             self.logger.debug(f"Dumping users: {', '.join(self.args.active_users)}")
-        if self.args.users_export:
-            self.logger.fail("--users-export is deprecated, use --active-users --export FILE instead")
-        return UserSamrDump(self).dump(requested_users=self.args.active_users, dump_path=self.args.export or self.args.users_export, active_only=True)
+        return UserSamrDump(self).dump(requested_users=self.args.active_users, dump_path=self.args.export, active_only=True)
 
     def computers(self):
         self.logger.fail("[REMOVED] Arg moved to the ldap protocol")
@@ -2079,6 +2077,16 @@ class smb(connection):
 
         return spider.results
 
+    def export_lines(self, lines, path, object_name="entries"):
+        if not path:
+            return
+        try:
+            with open(path, "w", encoding="utf-8") as file:
+                file.writelines(f"{line}\n" for line in lines)
+            self.logger.success(f"Exported {len(lines)} {object_name} to {path}")
+        except OSError as e:
+            self.logger.fail(f"Export failed: {e}")
+
     def rid_brute(self, max_rid=None):
         entries = []
         if not max_rid:
@@ -2146,6 +2154,8 @@ class smb(connection):
                     )
             so_far += simultaneous
         dce.disconnect()
+        usernames = sorted({entry["username"] for entry in entries if entry["sidtype"] == "SidTypeUser" and not entry["username"].endswith("$")})
+        self.export_lines(usernames, self.args.export, "users")
         return entries
 
     def put_file_single(self, src, dst):
