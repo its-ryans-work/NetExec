@@ -1019,6 +1019,16 @@ class ldap(connection):
                 self.logger.display(f"Skipping non-Active Directory trust '{trust_name}' with type: {trust_type_text} and direction: {direction_text}")
         self.logger.info("Domain Controller enumeration complete.")
 
+    def export_lines(self, lines, object_name="entries"):
+        if not self.args.export:
+            return
+        try:
+            with open(self.args.export, "w", encoding="utf-8") as file:
+                file.writelines(f"{line}\n" for line in lines)
+            self.logger.success(f"Exported {len(lines)} {object_name} to {self.args.export}")
+        except OSError as e:
+            self.logger.fail(f"Export failed: {e}")
+
     def active_users(self):
         if len(self.args.active_users) > 0:
             self.logger.debug(f"Dumping users: {', '.join(self.args.active_users)}")
@@ -1044,6 +1054,8 @@ class ldap(connection):
                 if pwd_last_set:
                     pwd_last_set = "<never>" if pwd_last_set == "0" else datetime.fromtimestamp(self.getUnixTime(int(pwd_last_set))).strftime("%Y-%m-%d %H:%M:%S")
                 self.logger.highlight(f"{user.get('sAMAccountName', ''):<30}{pwd_last_set:<20}{user.get('badPwdCount', ''):<9}{user.get('description', '')}")
+
+            self.export_lines([user.get("sAMAccountName", "") for user in active_users], "active users")
 
     def asreproast(self):
         # Building the search filter
