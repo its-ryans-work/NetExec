@@ -750,7 +750,8 @@ class ldap(connection):
             self.export_lines(users, self.args.export or self.args.users_export, "users")
 
     def users_export(self):
-        self.users()
+        if self.args.active_users is None:
+            self.users()
 
     def groups(self):
         # Group specific member search
@@ -1055,7 +1056,9 @@ class ldap(connection):
                     pwd_last_set = "<never>" if pwd_last_set == "0" else datetime.fromtimestamp(self.getUnixTime(int(pwd_last_set))).strftime("%Y-%m-%d %H:%M:%S")
                 self.logger.highlight(f"{user.get('sAMAccountName', ''):<30}{pwd_last_set:<20}{user.get('badPwdCount', ''):<9}{user.get('description', '')}")
 
-            self.export_lines([user.get("sAMAccountName", "") for user in active_users], self.args.export, "active users")
+            if self.args.users_export:
+                self.logger.fail("--users-export is deprecated, use --active-users --export FILE instead")
+            self.export_lines([user.get("sAMAccountName", "") for user in active_users], self.args.export or self.args.users_export, "active users")
 
     def asreproast(self):
         # Building the search filter
