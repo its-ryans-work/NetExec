@@ -1957,6 +1957,8 @@ class smb(connection):
     def active_users(self):
         if self.args.active_users:
             self.logger.debug(f"Dumping users: {', '.join(self.args.active_users)}")
+        if self.args.users_export and not self.args.export:
+            self.logger.fail("--users-export does not apply to --active-users, use --active-users --export FILE instead")
         return UserSamrDump(self).dump(requested_users=self.args.active_users, dump_path=self.args.export, active_only=True)
 
     def computers(self):
