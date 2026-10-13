@@ -1946,7 +1946,9 @@ class smb(connection):
     def users(self):
         if self.args.users:
             self.logger.debug(f"Dumping users: {', '.join(self.args.users)}")
-        return UserSamrDump(self).dump(requested_users=self.args.users, dump_path=self.args.users_export)
+        if self.args.users_export:
+            self.logger.fail("--users-export is deprecated, use --users --export FILE instead")
+        return UserSamrDump(self).dump(requested_users=self.args.users, dump_path=self.args.export or self.args.users_export)
 
     def users_export(self):
         self.users()
