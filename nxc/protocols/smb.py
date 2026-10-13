@@ -2071,6 +2071,16 @@ class smb(connection):
 
         return spider.results
 
+    def export_lines(self, lines, path, object_name="entries"):
+        if not path:
+            return
+        try:
+            with open(path, "w", encoding="utf-8") as file:
+                file.writelines(f"{line}\n" for line in lines)
+            self.logger.success(f"Exported {len(lines)} {object_name} to {path}")
+        except OSError as e:
+            self.logger.fail(f"Export failed: {e}")
+
     def rid_brute(self, max_rid=None):
         entries = []
         if not max_rid:
@@ -2138,6 +2148,8 @@ class smb(connection):
                     )
             so_far += simultaneous
         dce.disconnect()
+        usernames = sorted({entry["username"] for entry in entries if entry["sidtype"] == "SidTypeUser" and not entry["username"].endswith("$")})
+        self.export_lines(usernames, self.args.export, "users")
         return entries
 
     def put_file_single(self, src, dst):
