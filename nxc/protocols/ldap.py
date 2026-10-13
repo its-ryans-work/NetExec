@@ -750,7 +750,8 @@ class ldap(connection):
             self.export_lines(users, self.args.export or self.args.users_export, "users")
 
     def users_export(self):
-        self.users()
+        if self.args.active_users is None:
+            self.users()
 
     def export_lines(self, lines, path, object_name="entries"):
         if not path:
@@ -1054,6 +1055,10 @@ class ldap(connection):
                 if pwd_last_set:
                     pwd_last_set = "<never>" if pwd_last_set == "0" else datetime.fromtimestamp(self.getUnixTime(int(pwd_last_set))).strftime("%Y-%m-%d %H:%M:%S")
                 self.logger.highlight(f"{user.get('sAMAccountName', ''):<30}{pwd_last_set:<20}{user.get('badPwdCount', ''):<9}{user.get('description', '')}")
+
+            if self.args.users_export and not self.args.export:
+                self.logger.fail("--users-export does not apply to --active-users, use --active-users --export FILE instead")
+            self.export_lines([user.get("sAMAccountName", "") for user in active_users], self.args.export, "active users")
 
     def asreproast(self):
         # Building the search filter
